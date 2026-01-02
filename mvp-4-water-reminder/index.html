@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Water Reminder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #0984e3;
+            text-decoration: none;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .water-goal {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .goal-input {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        input {
+            width: 100px;
+            padding: 0.5rem;
+            border: 2px solid #74b9ff;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+        
+        .water-cup {
+            width: 200px;
+            height: 300px;
+            margin: 2rem auto;
+            background: linear-gradient(to top, #74b9ff 0%, #74b9ff var(--fill, 0%), #e0e0e0 var(--fill, 0%));
+            border: 4px solid #0984e3;
+            border-radius: 0 0 50px 50px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .progress-text {
+            text-align: center;
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 2rem;
+        }
+        
+        .add-water {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .water-btn {
+            background: #74b9ff;
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .water-btn:hover {
+            background: #0984e3;
+        }
+        
+        .settings {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #eee;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+        
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        
+        .reminder-status {
+            background: #f0f0f0;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+        
+        button {
+            background: #0984e3;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← Back to Dashboard</a>
+        <h1>💧 Smart Water Reminder</h1>
+        
+        <div class="water-goal">
+            <div class="goal-input">
+                <label>Daily Goal:</label>
+                <input type="number" id="dailyGoal" value="2000" min="500" step="100">
+                <span>ml</span>
+            </div>
+        </div>
+        
+        <div class="water-cup" id="waterCup">
+            <span id="cupAmount">0</span>ml
+        </div>
+        
+        <div class="progress-text" id="progressText">
+            <div>Today: <span id="todayAmount">0</span>ml / <span id="goalDisplay">2000</span>ml</div>
+            <div style="font-size: 1rem; color: #666; margin-top: 0.5rem;">
+                <span id="percentage">0</span>% of daily goal
+            </div>
+        </div>
+        
+        <div class="add-water">
+            <button class="water-btn" onclick="addWater(250)">+250ml</button>
+            <button class="water-btn" onclick="addWater(500)">+500ml</button>
+            <button class="water-btn" onclick="addWater(750)">+750ml</button>
+        </div>
+        
+        <div class="settings">
+            <h3>Reminder Settings</h3>
+            <div class="form-group">
+                <label>Reminder Frequency</label>
+                <select id="reminderFreq">
+                    <option value="30">Every 30 minutes</option>
+                    <option value="60" selected>Every hour</option>
+                    <option value="90">Every 1.5 hours</option>
+                    <option value="120">Every 2 hours</option>
+                </select>
+            </div>
+            
+            <div class="reminder-status">
+                <strong>Reminders:</strong> <span id="reminderStatus">Enabled</span>
+                <button onclick="toggleReminders()" id="toggleBtn">Disable</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let waterData = JSON.parse(localStorage.getItem('waterData') || '{"today": 0, "goal": 2000, "reminders": true, "freq": 60}');
+        let reminderInterval = null;
+        
+        function updateDisplay() {
+            const today = getTodayAmount();
+            const goal = parseInt(document.getElementById('dailyGoal').value) || 2000;
+            const percentage = Math.min((today / goal) * 100, 100);
+            
+            document.getElementById('todayAmount').textContent = today;
+            document.getElementById('goalDisplay').textContent = goal;
+            document.getElementById('percentage').textContent = Math.round(percentage);
+            
+            const cup = document.getElementById('waterCup');
+            cup.style.setProperty('--fill', percentage + '%');
+            document.getElementById('cupAmount').textContent = today;
+            
+            waterData.goal = goal;
+            localStorage.setItem('waterData', JSON.stringify(waterData));
+        }
+        
+        function getTodayAmount() {
+            const today = new Date().toDateString();
+            const entries = waterData.entries || {};
+            return entries[today] || 0;
+        }
+        
+        function addWater(amount) {
+            const today = new Date().toDateString();
+            if (!waterData.entries) waterData.entries = {};
+            if (!waterData.entries[today]) waterData.entries[today] = 0;
+            
+            waterData.entries[today] += amount;
+            localStorage.setItem('waterData', JSON.stringify(waterData));
+            updateDisplay();
+            
+            // Show notification if enabled
+            if (waterData.reminders && 'Notification' in window && Notification.permission === 'granted') {
+                new Notification('Water logged! 💧', {
+                    body: `Added ${amount}ml. Total today: ${getTodayAmount()}ml`
+                });
+            }
+        }
+        
+        function toggleReminders() {
+            waterData.reminders = !waterData.reminders;
+            localStorage.setItem('waterData', JSON.stringify(waterData));
+            
+            if (waterData.reminders) {
+                startReminders();
+                document.getElementById('reminderStatus').textContent = 'Enabled';
+                document.getElementById('toggleBtn').textContent = 'Disable';
+            } else {
+                stopReminders();
+                document.getElementById('reminderStatus').textContent = 'Disabled';
+                document.getElementById('toggleBtn').textContent = 'Enable';
+            }
+        }
+        
+        function startReminders() {
+            stopReminders();
+            const freq = parseInt(document.getElementById('reminderFreq').value) * 60 * 1000;
+            
+            reminderInterval = setInterval(() => {
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    new Notification('Time to hydrate! 💧', {
+                        body: `You've had ${getTodayAmount()}ml today. Goal: ${waterData.goal}ml`
+                    });
+                }
+            }, freq);
+        }
+        
+        function stopReminders() {
+            if (reminderInterval) {
+                clearInterval(reminderInterval);
+                reminderInterval = null;
+            }
+        }
+        
+        document.getElementById('dailyGoal').addEventListener('change', updateDisplay);
+        document.getElementById('reminderFreq').addEventListener('change', function() {
+            waterData.freq = parseInt(this.value);
+            localStorage.setItem('waterData', JSON.stringify(waterData));
+            if (waterData.reminders) startReminders();
+        });
+        
+        // Request notification permission
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+        
+        // Initialize
+        document.getElementById('dailyGoal').value = waterData.goal;
+        document.getElementById('reminderFreq').value = waterData.freq || 60;
+        document.getElementById('reminderStatus').textContent = waterData.reminders ? 'Enabled' : 'Disabled';
+        document.getElementById('toggleBtn').textContent = waterData.reminders ? 'Disable' : 'Enable';
+        
+        updateDisplay();
+        if (waterData.reminders) startReminders();
+    </script>
+</body>
+</html>
+

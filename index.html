@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wellness Project - 10 Product MVPs</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 1rem;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            text-align: center;
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+        
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+        }
+        
+        .card p {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .card-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-weight: bold;
+            margin-right: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌟 Wellness Project</h1>
+        <p class="subtitle">10 Simple but Useful Product MVPs</p>
+        
+        <div class="grid">
+            <a href="mvp-1-expense-tracker/index.html">
+                <div class="card">
+                    <h2><span class="card-number">1</span>Personal Expense Tracker</h2>
+                    <p>Track expenses with receipt photos. Quick logging with OCR extraction.</p>
+                </div>
+            </a>
+            
+            <a href="mvp-2-focus-timer/index.html">
+                <div class="card">
+                    <h2><span class="card-number">2</span>Focus Timer with Ambient Sounds</h2>
+                    <p>Pomodoro timer with ambient soundscapes for better focus.</p>
+                </div>
+            </a>
+            
+            <a href="mvp-3-recipe-organizer/index.html">
+                <div class="card">
+                    <h2><span class="card-number">3</span>Local Recipe Organizer</h2>
+                    <p>Save and organize recipes locally. Tag by cuisine and difficulty.</p>
+                </div>
+            </a>
+            
+            <a href="mvp-4-water-reminder/index.html">
+                <div class="card">
+                    <h2><span class="card-number">4</span>Smart Water Reminder</h2>
+                    <p>Hydration tracking with smart reminders based on your schedule.</p>
+                </div>
+            </a>
+            
+            <a href="mvp-5-meeting-notes/index.html">
+                <div class="card">
+                    <h2><span class="card-number">5</span>One-Click Meeting Notes</h2>
+                    <p>Auto-generate meeting notes from audio transcripts.</p>
+                </div>
+            </a>
+            
+            <a href="mvp-6-password-checker/index.html">
+                <div class="card">
+                    <h2><span class="card-number">6</span>Password Health Checker</h2>
+                    <p>Check password strength and security without storing passwords.</p>
+                </div>
+            </a>
+            
+            <a href="mvp-7-habit-tracker/index.html">
+                <div class="card">
+                    <h2><span class="card-number">7</span>Habit Streak Visualizer</h2>
+                    <p>Beautiful habit tracker with visual calendar and streak tracking.</p>
+                </div>
+            </a>
+            
+            <a href="mvp-8-expense-splitter/index.html">
+                <div class="card">
+                    <h2><span class="card-number">8</span>Quick Expense Splitter</h2>
+                    <p>Split bills among friends with automatic calculations.</p>
+                </div>
+            </a>
+            
+            <a href="mvp-9-weather-alerts/index.html">
+                <div class="card">
+                    <h2><span class="card-number">9</span>Local Weather Alerts</h2>
+                    <p>Hyper-local weather notifications for your schedule.</p>
+                </div>
+            </a>
+            
+            <a href="mvp-10-business-card/index.html">
+                <div class="card">
+                    <h2><span class="card-number">10</span>Digital Business Card Generator</h2>
+                    <p>Create QR code business cards with beautiful landing pages.</p>
+                </div>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
+

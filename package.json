@@ -1,0 +1,17 @@
+{
+  "name": "wellness-project",
+  "version": "1.0.0",
+  "description": "10 Wellness Product MVPs",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx http-server . -p 8080 -o",
+    "start": "npx http-server . -p 8080 -o"
+  },
+  "keywords": ["wellness", "mvp", "products"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
+

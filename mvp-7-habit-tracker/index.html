@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habit Streak Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 2rem;
+        }
+        
+        .add-habit-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-bottom: 2rem;
+        }
+        
+        .habits-list {
+            display: grid;
+            gap: 2rem;
+        }
+        
+        .habit-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .habit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .habit-header h2 {
+            color: #333;
+        }
+        
+        .streak-info {
+            text-align: right;
+        }
+        
+        .streak-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .streak-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .day-label {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #999;
+            font-weight: bold;
+        }
+        
+        .day-cell {
+            aspect-ratio: 1;
+            border: 2px solid #eee;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .day-cell.empty {
+            background: #f9f9f9;
+            border-color: #eee;
+        }
+        
+        .day-cell.completed {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+        
+        .day-cell.today {
+            border-color: #ff4444;
+            border-width: 3px;
+        }
+        
+        .day-cell:hover:not(.empty) {
+            transform: scale(1.1);
+        }
+        
+        .stats {
+            display: flex;
+            gap: 2rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #eee;
+        }
+        
+        .stat-item {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+        
+        .delete-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            margin: 10% auto;
+            padding: 2rem;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+        
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← Back to Dashboard</a>
+        <h1>🔥 Habit Streak Visualizer</h1>
+        
+        <button class="add-habit-btn" onclick="openModal()">+ Add New Habit</button>
+        
+        <div class="habits-list" id="habitsList"></div>
+    </div>
+    
+    <div class="modal" id="habitModal">
+        <div class="modal-content">
+            <h2>Add New Habit</h2>
+            <form id="habitForm">
+                <div class="form-group">
+                    <label>Habit Name</label>
+                    <input type="text" id="habitName" required placeholder="e.g., Exercise, Read, Meditate">
+                </div>
+                <button type="submit">Add Habit</button>
+                <button type="button" onclick="closeModal()" style="background: #999;">Cancel</button>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        let habits = JSON.parse(localStorage.getItem('habits') || '[]');
+        
+        function openModal() {
+            document.getElementById('habitModal').style.display = 'block';
+        }
+        
+        function closeModal() {
+            document.getElementById('habitModal').style.display = 'none';
+            document.getElementById('habitForm').reset();
+        }
+        
+        document.getElementById('habitForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('habitName').value.trim();
+            if (name) {
+                const habit = {
+                    id: Date.now(),
+                    name: name,
+                    completedDays: [],
+                    createdAt: new Date().toISOString()
+                };
+                habits.push(habit);
+                localStorage.setItem('habits', JSON.stringify(habits));
+                closeModal();
+                renderHabits();
+            }
+        });
+        
+        function renderHabits() {
+            const list = document.getElementById('habitsList');
+            
+            if (habits.length === 0) {
+                list.innerHTML = '<p style="color: #999; text-align: center; padding: 2rem;">No habits yet. Add your first habit!</p>';
+                return;
+            }
+            
+            list.innerHTML = habits.map(habit => {
+                const streak = calculateStreak(habit.completedDays);
+                const stats = calculateStats(habit.completedDays);
+                
+                return `
+                    <div class="habit-card">
+                        <div class="habit-header">
+                            <div>
+                                <h2>${habit.name}</h2>
+                            </div>
+                            <div class="streak-info">
+                                <div class="streak-number">${streak}</div>
+                                <div class="streak-label">day streak 🔥</div>
+                            </div>
+                        </div>
+                        <div class="calendar">
+                            ${getDayLabels()}
+                            ${generateCalendar(habit.completedDays)}
+                        </div>
+                        <div class="stats">
+                            <div class="stat-item">
+                                <div class="stat-value">${stats.thisWeek}</div>
+                                <div class="stat-label">This Week</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${stats.thisMonth}</div>
+                                <div class="stat-label">This Month</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${stats.total}</div>
+                                <div class="stat-label">Total Days</div>
+                            </div>
+                        </div>
+                        <button class="delete-btn" onclick="deleteHabit(${habit.id})" style="margin-top: 1rem;">Delete Habit</button>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function getDayLabels() {
+            return ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => 
+                `<div class="day-label">${day}</div>`
+            ).join('');
+        }
+        
+        function generateCalendar(completedDays) {
+            const today = new Date();
+            const startDate = new Date(today);
+            startDate.setDate(startDate.getDate() - 41); // Show last 6 weeks
+            
+            const cells = [];
+            const completedSet = new Set(completedDays.map(d => d.split('T')[0]));
+            
+            for (let i = 0; i < 42; i++) {
+                const date = new Date(startDate);
+                date.setDate(startDate.getDate() + i);
+                const dateStr = date.toISOString().split('T')[0];
+                const isToday = dateStr === today.toISOString().split('T')[0];
+                const isCompleted = completedSet.has(dateStr);
+                const isPast = date < today && !isToday;
+                
+                let className = 'day-cell';
+                if (isCompleted) {
+                    className += ' completed';
+                } else if (isPast) {
+                    className += ' empty';
+                }
+                if (isToday) {
+                    className += ' today';
+                }
+                
+                const dayNum = date.getDate();
+                cells.push(`
+                    <div class="${className}" 
+                         onclick="toggleDay('${dateStr}')" 
+                         title="${date.toLocaleDateString()}">
+                        ${dayNum}
+                    </div>
+                `);
+            }
+            
+            return cells.join('');
+        }
+        
+        function toggleDay(dateStr) {
+            const today = new Date().toISOString().split('T')[0];
+            if (dateStr > today) return; // Can't mark future days
+            
+            // Find which habit this belongs to (simplified - in real app, pass habit ID)
+            const habitId = parseInt(prompt('Enter habit number to update (1-' + habits.length + '):') || '1') - 1;
+            if (habitId < 0 || habitId >= habits.length) return;
+            
+            const habit = habits[habitId];
+            const index = habit.completedDays.findIndex(d => d.startsWith(dateStr));
+            
+            if (index >= 0) {
+                habit.completedDays.splice(index, 1);
+            } else {
+                habit.completedDays.push(dateStr + 'T00:00:00.000Z');
+            }
+            
+            localStorage.setItem('habits', JSON.stringify(habits));
+            renderHabits();
+        }
+        
+        function calculateStreak(completedDays) {
+            if (completedDays.length === 0) return 0;
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const completedSet = new Set(completedDays.map(d => d.split('T')[0]));
+            
+            let streak = 0;
+            let checkDate = new Date(today);
+            
+            while (true) {
+                const dateStr = checkDate.toISOString().split('T')[0];
+                if (completedSet.has(dateStr)) {
+                    streak++;
+                    checkDate.setDate(checkDate.getDate() - 1);
+                } else {
+                    break;
+                }
+            }
+            
+            return streak;
+        }
+        
+        function calculateStats(completedDays) {
+            const today = new Date();
+            const weekStart = new Date(today);
+            weekStart.setDate(today.getDate() - today.getDay());
+            const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+            
+            const completedSet = new Set(completedDays.map(d => d.split('T')[0]));
+            
+            let thisWeek = 0;
+            let thisMonth = 0;
+            
+            completedDays.forEach(day => {
+                const date = new Date(day);
+                if (date >= weekStart) thisWeek++;
+                if (date >= monthStart) thisMonth++;
+            });
+            
+            return {
+                thisWeek,
+                thisMonth,
+                total: completedDays.length
+            };
+        }
+        
+        function deleteHabit(id) {
+            if (confirm('Delete this habit?')) {
+                habits = habits.filter(h => h.id !== id);
+                localStorage.setItem('habits', JSON.stringify(habits));
+                renderHabits();
+            }
+        }
+        
+        window.onclick = function(event) {
+            const modal = document.getElementById('habitModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        };
+        
+        renderHabits();
+    </script>
+</body>
+</html>
+

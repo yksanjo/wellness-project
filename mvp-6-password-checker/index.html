@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Health Checker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .password-input-group {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+        
+        input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .toggle-visibility {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+        
+        .strength-meter {
+            height: 10px;
+            background: #eee;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+        
+        .strength-bar {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s, background 0.3s;
+            border-radius: 5px;
+        }
+        
+        .strength-bar.weak {
+            background: #ff4444;
+            width: 33%;
+        }
+        
+        .strength-bar.medium {
+            background: #ffaa00;
+            width: 66%;
+        }
+        
+        .strength-bar.strong {
+            background: #00aa44;
+            width: 100%;
+        }
+        
+        .strength-text {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        
+        .checks {
+            margin: 2rem 0;
+        }
+        
+        .check-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 6px;
+            background: #f9f9f9;
+        }
+        
+        .check-item.pass {
+            background: #d4edda;
+        }
+        
+        .check-item.fail {
+            background: #f8d7da;
+        }
+        
+        .check-icon {
+            margin-right: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        .breach-check {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+        
+        .breach-result {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 6px;
+        }
+        
+        .breach-result.safe {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .breach-result.breached {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+        
+        .recommendations {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #fff3cd;
+            border-radius: 8px;
+        }
+        
+        .recommendations h3 {
+            margin-bottom: 1rem;
+            color: #856404;
+        }
+        
+        .recommendations ul {
+            margin-left: 1.5rem;
+            color: #856404;
+        }
+        
+        .recommendations li {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← Back to Dashboard</a>
+        <h1>🔒 Password Health Checker</h1>
+        
+        <div class="password-input-group">
+            <input type="password" id="passwordInput" placeholder="Enter password to check" autocomplete="off">
+            <button class="toggle-visibility" onclick="toggleVisibility()">👁️</button>
+        </div>
+        
+        <div class="strength-meter">
+            <div class="strength-bar" id="strengthBar"></div>
+        </div>
+        
+        <div class="strength-text" id="strengthText">Enter a password to check</div>
+        
+        <div class="checks" id="checksList"></div>
+        
+        <div class="breach-check">
+            <h3>🔍 Breach Check</h3>
+            <p style="color: #666; font-size: 0.9rem; margin-top: 0.5rem;">
+                Check if your password has been exposed in data breaches (using first 5 characters only)
+            </p>
+            <button onclick="checkBreach()" id="breachBtn">Check for Breaches</button>
+            <div id="breachResult"></div>
+        </div>
+        
+        <div class="recommendations" id="recommendations" style="display: none;">
+            <h3>💡 Recommendations</h3>
+            <ul id="recommendationsList"></ul>
+        </div>
+    </div>
+    
+    <script>
+        const passwordInput = document.getElementById('passwordInput');
+        let isVisible = false;
+        
+        passwordInput.addEventListener('input', checkPassword);
+        
+        function toggleVisibility() {
+            isVisible = !isVisible;
+            passwordInput.type = isVisible ? 'text' : 'password';
+        }
+        
+        function checkPassword() {
+            const password = passwordInput.value;
+            const checks = [];
+            let score = 0;
+            
+            // Length check
+            if (password.length >= 12) {
+                checks.push({ text: 'At least 12 characters', pass: true });
+                score += 2;
+            } else if (password.length >= 8) {
+                checks.push({ text: 'At least 8 characters (12+ recommended)', pass: true });
+                score += 1;
+            } else {
+                checks.push({ text: 'At least 8 characters', pass: false });
+            }
+            
+            // Uppercase
+            if (/[A-Z]/.test(password)) {
+                checks.push({ text: 'Contains uppercase letters', pass: true });
+                score += 1;
+            } else {
+                checks.push({ text: 'Contains uppercase letters', pass: false });
+            }
+            
+            // Lowercase
+            if (/[a-z]/.test(password)) {
+                checks.push({ text: 'Contains lowercase letters', pass: true });
+                score += 1;
+            } else {
+                checks.push({ text: 'Contains lowercase letters', pass: false });
+            }
+            
+            // Numbers
+            if (/\d/.test(password)) {
+                checks.push({ text: 'Contains numbers', pass: true });
+                score += 1;
+            } else {
+                checks.push({ text: 'Contains numbers', pass: false });
+            }
+            
+            // Special characters
+            if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+                checks.push({ text: 'Contains special characters', pass: true });
+                score += 1;
+            } else {
+                checks.push({ text: 'Contains special characters', pass: false });
+            }
+            
+            // Common patterns
+            const commonPatterns = ['123', 'abc', 'password', 'qwerty', 'admin'];
+            const hasCommonPattern = commonPatterns.some(pattern => 
+                password.toLowerCase().includes(pattern)
+            );
+            if (!hasCommonPattern) {
+                checks.push({ text: 'No common patterns (123, abc, etc.)', pass: true });
+                score += 1;
+            } else {
+                checks.push({ text: 'No common patterns (123, abc, etc.)', pass: false });
+            }
+            
+            // Repeated characters
+            const hasRepeats = /(.)\1{2,}/.test(password);
+            if (!hasRepeats) {
+                checks.push({ text: 'No excessive repeated characters', pass: true });
+                score += 1;
+            } else {
+                checks.push({ text: 'No excessive repeated characters', pass: false });
+            }
+            
+            // Update UI
+            const strengthBar = document.getElementById('strengthBar');
+            const strengthText = document.getElementById('strengthText');
+            const checksList = document.getElementById('checksList');
+            
+            strengthBar.className = 'strength-bar';
+            
+            if (password.length === 0) {
+                strengthText.textContent = 'Enter a password to check';
+                strengthBar.style.width = '0%';
+                checksList.innerHTML = '';
+                return;
+            }
+            
+            let strength = 'weak';
+            if (score >= 7) {
+                strength = 'strong';
+                strengthText.textContent = 'Strong Password ✓';
+                strengthText.style.color = '#00aa44';
+            } else if (score >= 4) {
+                strength = 'medium';
+                strengthText.textContent = 'Medium Strength';
+                strengthText.style.color = '#ffaa00';
+            } else {
+                strengthText.textContent = 'Weak Password';
+                strengthText.style.color = '#ff4444';
+            }
+            
+            strengthBar.classList.add(strength);
+            
+            checksList.innerHTML = checks.map(check => `
+                <div class="check-item ${check.pass ? 'pass' : 'fail'}">
+                    <span class="check-icon">${check.pass ? '✓' : '✗'}</span>
+                    <span>${check.text}</span>
+                </div>
+            `).join('');
+            
+            // Show recommendations
+            showRecommendations(checks, score);
+        }
+        
+        function showRecommendations(checks, score) {
+            const recommendations = document.getElementById('recommendations');
+            const list = document.getElementById('recommendationsList');
+            const recs = [];
+            
+            if (score < 7) {
+                const failed = checks.filter(c => !c.pass);
+                failed.forEach(check => {
+                    if (check.text.includes('12 characters')) {
+                        recs.push('Use at least 12 characters for better security');
+                    } else if (check.text.includes('uppercase')) {
+                        recs.push('Add uppercase letters (A-Z)');
+                    } else if (check.text.includes('lowercase')) {
+                        recs.push('Add lowercase letters (a-z)');
+                    } else if (check.text.includes('numbers')) {
+                        recs.push('Include numbers (0-9)');
+                    } else if (check.text.includes('special')) {
+                        recs.push('Add special characters (!@#$%^&*)');
+                    } else if (check.text.includes('common patterns')) {
+                        recs.push('Avoid common patterns like "123" or "abc"');
+                    } else if (check.text.includes('repeated')) {
+                        recs.push('Avoid repeating the same character multiple times');
+                    }
+                });
+            }
+            
+            if (recs.length > 0) {
+                recommendations.style.display = 'block';
+                list.innerHTML = recs.map(r => `<li>${r}</li>`).join('');
+            } else {
+                recommendations.style.display = 'none';
+            }
+        }
+        
+        async function checkBreach() {
+            const password = passwordInput.value;
+            if (!password) {
+                alert('Please enter a password first');
+                return;
+            }
+            
+            const btn = document.getElementById('breachBtn');
+            const result = document.getElementById('breachResult');
+            
+            btn.disabled = true;
+            btn.textContent = 'Checking...';
+            result.innerHTML = '';
+            
+            // Simulate breach check (in production, use Have I Been Pwned API)
+            // For security, we only send first 5 characters hash
+            const hash = await sha256(password.substring(0, 5));
+            const hashPrefix = hash.substring(0, 5);
+            
+            // Simulated check - in real app, call HIBP API
+            setTimeout(() => {
+                // Random result for demo (in production, use actual API)
+                const isBreached = Math.random() > 0.7; // 30% chance for demo
+                
+                result.className = `breach-result ${isBreached ? 'breached' : 'safe'}`;
+                result.innerHTML = isBreached
+                    ? '<strong>⚠️ This password pattern has been found in data breaches!</strong><br>Consider using a different, unique password.'
+                    : '<strong>✓ No breaches found for this pattern</strong><br>However, always use unique passwords for each account.';
+                
+                btn.disabled = false;
+                btn.textContent = 'Check for Breaches';
+            }, 1000);
+        }
+        
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Weather Alerts</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #0984e3;
+            text-decoration: none;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .location-section {
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        
+        button {
+            background: #0984e3;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 1rem;
+        }
+        
+        .weather-display {
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            border-radius: 12px;
+            color: white;
+            margin: 2rem 0;
+        }
+        
+        .weather-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .temperature {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .description {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        .detail-item {
+            text-align: center;
+        }
+        
+        .detail-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .detail-value {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-top: 0.25rem;
+        }
+        
+        .alerts-section {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+        
+        .alert-item {
+            padding: 1rem;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #0984e3;
+        }
+        
+        .alert-item.warning {
+            border-left-color: #ffaa00;
+            background: #fff3cd;
+        }
+        
+        .alert-item.danger {
+            border-left-color: #ff4444;
+            background: #f8d7da;
+        }
+        
+        .schedule-section {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+        
+        .schedule-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← Back to Dashboard</a>
+        <h1>🌤️ Local Weather Alerts</h1>
+        
+        <div class="location-section">
+            <div class="form-group">
+                <label>Location (City, Country)</label>
+                <input type="text" id="locationInput" placeholder="e.g., New York, USA" value="New York, USA">
+            </div>
+            <button onclick="getWeather()">Get Weather</button>
+        </div>
+        
+        <div id="weatherDisplay" style="display: none;">
+            <div class="weather-display">
+                <div class="weather-icon" id="weatherIcon">☀️</div>
+                <div class="temperature" id="temperature">--°</div>
+                <div class="description" id="description">--</div>
+                <div class="details">
+                    <div class="detail-item">
+                        <div class="detail-label">Feels Like</div>
+                        <div class="detail-value" id="feelsLike">--°</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Humidity</div>
+                        <div class="detail-value" id="humidity">--%</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Wind Speed</div>
+                        <div class="detail-value" id="windSpeed">-- km/h</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">UV Index</div>
+                        <div class="detail-value" id="uvIndex">--</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alerts-section">
+                <h3>⚠️ Weather Alerts</h3>
+                <div id="alertsList"></div>
+            </div>
+        </div>
+        
+        <div class="schedule-section">
+            <h3>📅 Schedule-Based Alerts</h3>
+            <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">
+                Add your schedule to get weather alerts only when they affect your plans
+            </p>
+            <div id="scheduleList"></div>
+            <button onclick="addScheduleItem()" style="margin-top: 1rem; background: #74b9ff;">+ Add Schedule Item</button>
+        </div>
+        
+        <div id="loading" class="loading" style="display: none;">Loading weather data...</div>
+    </div>
+    
+    <script>
+        // Note: In production, use a real weather API like OpenWeatherMap
+        // This is a demo with simulated data
+        
+        function getWeather() {
+            const location = document.getElementById('locationInput').value;
+            if (!location) {
+                alert('Please enter a location');
+                return;
+            }
+            
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('weatherDisplay').style.display = 'none';
+            
+            // Simulate API call
+            setTimeout(() => {
+                // Simulated weather data
+                const weatherData = {
+                    temp: Math.floor(Math.random() * 30) + 10,
+                    feelsLike: Math.floor(Math.random() * 30) + 10,
+                    description: ['Sunny', 'Cloudy', 'Partly Cloudy', 'Rainy', 'Clear'][Math.floor(Math.random() * 5)],
+                    humidity: Math.floor(Math.random() * 40) + 40,
+                    windSpeed: Math.floor(Math.random() * 30) + 5,
+                    uvIndex: Math.floor(Math.random() * 10) + 1,
+                    icon: '☀️'
+                };
+                
+                // Update icon based on description
+                if (weatherData.description.includes('Rain')) weatherData.icon = '🌧️';
+                else if (weatherData.description.includes('Cloud')) weatherData.icon = '☁️';
+                else if (weatherData.description.includes('Clear')) weatherData.icon = '☀️';
+                else weatherData.icon = '⛅';
+                
+                displayWeather(weatherData);
+                checkAlerts(weatherData);
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('weatherDisplay').style.display = 'block';
+            }, 1000);
+        }
+        
+        function displayWeather(data) {
+            document.getElementById('weatherIcon').textContent = data.icon;
+            document.getElementById('temperature').textContent = `${data.temp}°C`;
+            document.getElementById('description').textContent = data.description;
+            document.getElementById('feelsLike').textContent = `${data.feelsLike}°C`;
+            document.getElementById('humidity').textContent = `${data.humidity}%`;
+            document.getElementById('windSpeed').textContent = `${data.windSpeed} km/h`;
+            document.getElementById('uvIndex').textContent = data.uvIndex;
+        }
+        
+        function checkAlerts(data) {
+            const alerts = [];
+            
+            if (data.temp < 5) {
+                alerts.push({ type: 'warning', message: 'Cold weather! Dress warmly.' });
+            }
+            if (data.temp > 30) {
+                alerts.push({ type: 'warning', message: 'Hot weather! Stay hydrated and avoid direct sun.' });
+            }
+            if (data.description.includes('Rain')) {
+                alerts.push({ type: 'warning', message: 'Rain expected! Bring an umbrella.' });
+            }
+            if (data.uvIndex > 7) {
+                alerts.push({ type: 'warning', message: 'High UV index! Use sunscreen.' });
+            }
+            if (data.windSpeed > 25) {
+                alerts.push({ type: 'warning', message: 'Strong winds expected!' });
+            }
+            
+            const alertsList = document.getElementById('alertsList');
+            if (alerts.length === 0) {
+                alertsList.innerHTML = '<div class="alert-item">No weather alerts at this time. Enjoy your day! ☀️</div>';
+            } else {
+                alertsList.innerHTML = alerts.map(alert => `
+                    <div class="alert-item ${alert.type}">
+                        <strong>${alert.message}</strong>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        let scheduleItems = JSON.parse(localStorage.getItem('weatherSchedule') || '[]');
+        
+        function renderSchedule() {
+            const list = document.getElementById('scheduleList');
+            if (scheduleItems.length === 0) {
+                list.innerHTML = '<p style="color: #999;">No schedule items yet.</p>';
+                return;
+            }
+            
+            list.innerHTML = scheduleItems.map((item, index) => `
+                <div class="schedule-item">
+                    <div>
+                        <strong>${item.time}</strong> - ${item.activity}
+                    </div>
+                    <button onclick="removeScheduleItem(${index})" style="background: #ff4444; padding: 0.5rem 1rem; font-size: 0.9rem;">Remove</button>
+                </div>
+            `).join('');
+        }
+        
+        function addScheduleItem() {
+            const time = prompt('Enter time (e.g., 9:00 AM):');
+            const activity = prompt('Enter activity:');
+            if (time && activity) {
+                scheduleItems.push({ time, activity });
+                localStorage.setItem('weatherSchedule', JSON.stringify(scheduleItems));
+                renderSchedule();
+            }
+        }
+        
+        function removeScheduleItem(index) {
+            scheduleItems.splice(index, 1);
+            localStorage.setItem('weatherSchedule', JSON.stringify(scheduleItems));
+            renderSchedule();
+        }
+        
+        renderSchedule();
+        
+        // Auto-refresh weather every 30 minutes
+        setInterval(() => {
+            if (document.getElementById('locationInput').value) {
+                getWeather();
+            }
+        }, 30 * 60 * 1000);
+    </script>
+</body>
+</html>
+

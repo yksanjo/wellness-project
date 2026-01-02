@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus Timer with Ambient Sounds</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #667eea;
+            text-decoration: none;
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 2rem;
+        }
+        
+        .timer-display {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #667eea;
+            margin: 2rem 0;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin: 2rem 0;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        button:hover {
+            background: #5568d3;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .sound-controls {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #eee;
+        }
+        
+        .sound-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .sound-btn {
+            padding: 1rem;
+            background: #f5f5f5;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .sound-btn:hover {
+            background: #eee;
+        }
+        
+        .sound-btn.active {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+        
+        .session-type {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        
+        .session-btn {
+            padding: 0.5rem 1rem;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        
+        .session-btn.active {
+            background: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <a href="../index.html" class="back-link">← Back</a>
+    
+    <div class="container">
+        <h1>🎵 Focus Timer</h1>
+        
+        <div class="session-type">
+            <button class="session-btn active" data-minutes="25">Focus (25min)</button>
+            <button class="session-btn" data-minutes="5">Short Break (5min)</button>
+            <button class="session-btn" data-minutes="15">Long Break (15min)</button>
+        </div>
+        
+        <div class="timer-display" id="timer">25:00</div>
+        
+        <div class="controls">
+            <button id="startBtn">Start</button>
+            <button id="pauseBtn" disabled>Pause</button>
+            <button id="resetBtn">Reset</button>
+        </div>
+        
+        <div class="sound-controls">
+            <h3>Ambient Sounds</h3>
+            <div class="sound-options">
+                <div class="sound-btn" data-sound="rain">🌧️ Rain</div>
+                <div class="sound-btn" data-sound="forest">🌲 Forest</div>
+                <div class="sound-btn" data-sound="cafe">☕ Cafe</div>
+                <div class="sound-btn" data-sound="ocean">🌊 Ocean</div>
+                <div class="sound-btn" data-sound="white">⚪ White Noise</div>
+                <div class="sound-btn" data-sound="none">🔇 None</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let timeLeft = 25 * 60; // 25 minutes in seconds
+        let timerInterval = null;
+        let isRunning = false;
+        let currentSound = null;
+        let audioContext = null;
+        let oscillator = null;
+        let gainNode = null;
+        
+        const timerDisplay = document.getElementById('timer');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        function updateDisplay() {
+            timerDisplay.textContent = formatTime(timeLeft);
+        }
+        
+        function startTimer() {
+            if (isRunning) return;
+            
+            isRunning = true;
+            startBtn.disabled = true;
+            pauseBtn.disabled = false;
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateDisplay();
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    alert('Time\'s up! 🎉');
+                    resetTimer();
+                }
+            }, 1000);
+        }
+        
+        function pauseTimer() {
+            if (!isRunning) return;
+            
+            isRunning = false;
+            clearInterval(timerInterval);
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+        }
+        
+        function resetTimer() {
+            pauseTimer();
+            timeLeft = parseInt(document.querySelector('.session-btn.active').dataset.minutes) * 60;
+            updateDisplay();
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+        }
+        
+        function playAmbientSound(type) {
+            stopSound();
+            
+            if (type === 'none') return;
+            
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                gainNode = audioContext.createGain();
+                gainNode.gain.value = 0.1; // Low volume
+                
+                // Create different sound patterns based on type
+                if (type === 'white') {
+                    const bufferSize = 4096;
+                    const noise = audioContext.createScriptProcessor(bufferSize, 1, 1);
+                    noise.onaudioprocess = function(e) {
+                        const output = e.outputBuffer.getChannelData(0);
+                        for (let i = 0; i < bufferSize; i++) {
+                            output[i] = Math.random() * 2 - 1;
+                        }
+                    };
+                    noise.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    oscillator = noise;
+                } else {
+                    // Simple tone-based ambient sounds
+                    oscillator = audioContext.createOscillator();
+                    oscillator.type = type === 'rain' ? 'sawtooth' : 'sine';
+                    oscillator.frequency.value = type === 'cafe' ? 200 : type === 'forest' ? 150 : 100;
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    oscillator.start();
+                }
+                
+                currentSound = type;
+            } catch (e) {
+                console.log('Audio not supported');
+            }
+        }
+        
+        function stopSound() {
+            if (oscillator) {
+                if (oscillator.stop) oscillator.stop();
+                if (oscillator.disconnect) oscillator.disconnect();
+                oscillator = null;
+            }
+            if (audioContext) {
+                audioContext.close();
+                audioContext = null;
+            }
+            currentSound = null;
+        }
+        
+        // Session type buttons
+        document.querySelectorAll('.session-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.session-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                resetTimer();
+            });
+        });
+        
+        // Sound buttons
+        document.querySelectorAll('.sound-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.sound-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                playAmbientSound(this.dataset.sound);
+            });
+        });
+        
+        startBtn.addEventListener('click', startTimer);
+        pauseBtn.addEventListener('click', pauseTimer);
+        resetBtn.addEventListener('click', resetTimer);
+        
+        updateDisplay();
+    </script>
+</body>
+</html>
+

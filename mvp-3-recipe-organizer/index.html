@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Recipe Organizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 2rem;
+        }
+        
+        .add-recipe-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-bottom: 2rem;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .modal-content {
+            background: white;
+            margin: 2rem auto;
+            padding: 2rem;
+            border-radius: 12px;
+            max-width: 600px;
+            width: 90%;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .tags-input {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .tag {
+            background: #667eea;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .tag-remove {
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .recipes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .recipe-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .recipe-card:hover {
+            transform: translateY(-4px);
+        }
+        
+        .recipe-card h3 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .recipe-meta {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        
+        .recipe-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .recipe-tag {
+            background: #f0f0ff;
+            color: #667eea;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        
+        .filter-bar {
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 0.5rem;
+        }
+        
+        .close-btn {
+            background: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← Back to Dashboard</a>
+        <h1>🍳 Local Recipe Organizer</h1>
+        
+        <button class="add-recipe-btn" onclick="openModal()">+ Add New Recipe</button>
+        
+        <div class="filter-bar">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="Italian">Italian</button>
+            <button class="filter-btn" data-filter="Asian">Asian</button>
+            <button class="filter-btn" data-filter="Mexican">Mexican</button>
+            <button class="filter-btn" data-filter="Dessert">Dessert</button>
+        </div>
+        
+        <div class="recipes-grid" id="recipesGrid"></div>
+    </div>
+    
+    <div class="modal" id="recipeModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Add New Recipe</h2>
+            <form id="recipeForm">
+                <div class="form-group">
+                    <label>Recipe Name</label>
+                    <input type="text" id="recipeName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Cuisine Type</label>
+                    <select id="cuisine" required>
+                        <option value="">Select cuisine</option>
+                        <option value="Italian">Italian</option>
+                        <option value="Asian">Asian</option>
+                        <option value="Mexican">Mexican</option>
+                        <option value="American">American</option>
+                        <option value="French">French</option>
+                        <option value="Dessert">Dessert</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Difficulty</label>
+                    <select id="difficulty" required>
+                        <option value="Easy">Easy</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Hard">Hard</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Prep Time (minutes)</label>
+                    <input type="number" id="prepTime" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Ingredients (one per line)</label>
+                    <textarea id="ingredients" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Instructions</label>
+                    <textarea id="instructions" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Tags (comma separated)</label>
+                    <input type="text" id="tagsInput" placeholder="quick, healthy, vegetarian">
+                    <div class="tags-input" id="tagsDisplay"></div>
+                </div>
+                
+                <button type="submit">Save Recipe</button>
+                <button type="button" class="close-btn" onclick="closeModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        let recipes = JSON.parse(localStorage.getItem('recipes') || '[]');
+        let currentFilter = 'all';
+        let editingId = null;
+        
+        function openModal(id = null) {
+            editingId = id;
+            const modal = document.getElementById('recipeModal');
+            const form = document.getElementById('recipeForm');
+            
+            if (id) {
+                const recipe = recipes.find(r => r.id === id);
+                document.getElementById('modalTitle').textContent = 'Edit Recipe';
+                document.getElementById('recipeName').value = recipe.name;
+                document.getElementById('cuisine').value = recipe.cuisine;
+                document.getElementById('difficulty').value = recipe.difficulty;
+                document.getElementById('prepTime').value = recipe.prepTime;
+                document.getElementById('ingredients').value = recipe.ingredients.join('\n');
+                document.getElementById('instructions').value = recipe.instructions;
+                document.getElementById('tagsInput').value = recipe.tags.join(', ');
+                updateTagsDisplay();
+            } else {
+                document.getElementById('modalTitle').textContent = 'Add New Recipe';
+                form.reset();
+                document.getElementById('tagsDisplay').innerHTML = '';
+            }
+            
+            modal.style.display = 'block';
+        }
+        
+        function closeModal() {
+            document.getElementById('recipeModal').style.display = 'none';
+            editingId = null;
+        }
+        
+        function updateTagsDisplay() {
+            const input = document.getElementById('tagsInput').value;
+            const tags = input.split(',').map(t => t.trim()).filter(t => t);
+            const display = document.getElementById('tagsDisplay');
+            
+            display.innerHTML = tags.map(tag => `
+                <span class="tag">
+                    ${tag}
+                    <span class="tag-remove" onclick="removeTag('${tag}')">×</span>
+                </span>
+            `).join('');
+        }
+        
+        document.getElementById('tagsInput').addEventListener('input', updateTagsDisplay);
+        
+        function removeTag(tag) {
+            const input = document.getElementById('tagsInput');
+            const tags = input.value.split(',').map(t => t.trim()).filter(t => t && t !== tag);
+            input.value = tags.join(', ');
+            updateTagsDisplay();
+        }
+        
+        document.getElementById('recipeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const recipe = {
+                id: editingId || Date.now(),
+                name: document.getElementById('recipeName').value,
+                cuisine: document.getElementById('cuisine').value,
+                difficulty: document.getElementById('difficulty').value,
+                prepTime: parseInt(document.getElementById('prepTime').value),
+                ingredients: document.getElementById('ingredients').value.split('\n').filter(i => i.trim()),
+                instructions: document.getElementById('instructions').value,
+                tags: document.getElementById('tagsInput').value.split(',').map(t => t.trim()).filter(t => t),
+                createdAt: editingId ? recipes.find(r => r.id === editingId).createdAt : new Date().toISOString()
+            };
+            
+            if (editingId) {
+                const index = recipes.findIndex(r => r.id === editingId);
+                recipes[index] = recipe;
+            } else {
+                recipes.push(recipe);
+            }
+            
+            localStorage.setItem('recipes', JSON.stringify(recipes));
+            closeModal();
+            renderRecipes();
+        });
+        
+        function renderRecipes() {
+            const grid = document.getElementById('recipesGrid');
+            const filtered = currentFilter === 'all' 
+                ? recipes 
+                : recipes.filter(r => r.cuisine === currentFilter);
+            
+            if (filtered.length === 0) {
+                grid.innerHTML = '<p style="color: #999; text-align: center; padding: 2rem; grid-column: 1/-1;">No recipes found. Add your first recipe!</p>';
+                return;
+            }
+            
+            grid.innerHTML = filtered.map(recipe => `
+                <div class="recipe-card" onclick="openModal(${recipe.id})">
+                    <h3>${recipe.name}</h3>
+                    <div class="recipe-meta">
+                        ${recipe.cuisine} • ${recipe.difficulty} • ${recipe.prepTime} min
+                    </div>
+                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">
+                        ${recipe.ingredients.length} ingredients
+                    </p>
+                    <div class="recipe-tags">
+                        ${recipe.tags.map(tag => `<span class="recipe-tag">${tag}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentFilter = this.dataset.filter;
+                renderRecipes();
+            });
+        });
+        
+        window.onclick = function(event) {
+            const modal = document.getElementById('recipeModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        };
+        
+        renderRecipes();
+    </script>
+</body>
+</html>
+

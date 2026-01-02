@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>One-Click Meeting Notes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 2rem;
+        }
+        
+        .recording-section {
+            text-align: center;
+            padding: 2rem;
+            background: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+        
+        .record-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: none;
+            background: #ff4444;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            margin: 1rem;
+            transition: transform 0.2s;
+        }
+        
+        .record-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .record-btn.recording {
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .transcript-area {
+            margin: 2rem 0;
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 1rem;
+            resize: vertical;
+        }
+        
+        .notes-section {
+            margin-top: 2rem;
+        }
+        
+        .notes-output {
+            background: #f9f9f9;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+        
+        .notes-output h3 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        
+        .notes-output ul {
+            margin-left: 1.5rem;
+            color: #666;
+        }
+        
+        .notes-output li {
+            margin-bottom: 0.5rem;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        button:hover {
+            background: #5568d3;
+        }
+        
+        .action-items {
+            background: #fff3cd;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+        }
+        
+        .saved-notes {
+            margin-top: 2rem;
+        }
+        
+        .note-item {
+            background: #f9f9f9;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #667eea;
+        }
+        
+        .note-item h4 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .note-item p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← Back to Dashboard</a>
+        <h1>📝 One-Click Meeting Notes</h1>
+        
+        <div class="recording-section">
+            <h3>Record Meeting</h3>
+            <button class="record-btn" id="recordBtn" onclick="toggleRecording()">🎤</button>
+            <p id="status">Click to start recording</p>
+        </div>
+        
+        <div class="transcript-area">
+            <label><strong>Transcript / Paste Meeting Text:</strong></label>
+            <textarea id="transcript" placeholder="Paste meeting transcript here or use voice recording..."></textarea>
+            <button onclick="generateNotes()">Generate Notes</button>
+            <button onclick="clearAll()" style="background: #999;">Clear</button>
+        </div>
+        
+        <div class="notes-section">
+            <div class="notes-output" id="notesOutput" style="display: none;">
+                <h3>📋 Meeting Summary</h3>
+                <div id="summary"></div>
+                
+                <h3 style="margin-top: 1.5rem;">✅ Action Items</h3>
+                <div class="action-items" id="actionItems"></div>
+                
+                <h3 style="margin-top: 1.5rem;">🔑 Key Decisions</h3>
+                <div id="keyDecisions"></div>
+                
+                <button onclick="saveNotes()">Save Notes</button>
+            </div>
+        </div>
+        
+        <div class="saved-notes">
+            <h3>Saved Notes</h3>
+            <div id="savedNotesList"></div>
+        </div>
+    </div>
+    
+    <script>
+        let isRecording = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let recognition = null;
+        
+        // Initialize speech recognition
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            
+            recognition.onresult = function(event) {
+                let transcript = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    transcript += event.results[i][0].transcript;
+                }
+                document.getElementById('transcript').value += transcript + ' ';
+            };
+            
+            recognition.onerror = function(event) {
+                console.error('Speech recognition error:', event.error);
+            };
+        }
+        
+        function toggleRecording() {
+            if (!isRecording) {
+                startRecording();
+            } else {
+                stopRecording();
+            }
+        }
+        
+        function startRecording() {
+            isRecording = true;
+            document.getElementById('recordBtn').classList.add('recording');
+            document.getElementById('status').textContent = 'Recording... Click to stop';
+            
+            if (recognition) {
+                recognition.start();
+            }
+            
+            // Also try audio recording
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+                    
+                    mediaRecorder.start();
+                })
+                .catch(err => {
+                    console.error('Error accessing microphone:', err);
+                });
+        }
+        
+        function stopRecording() {
+            isRecording = false;
+            document.getElementById('recordBtn').classList.remove('recording');
+            document.getElementById('status').textContent = 'Recording stopped';
+            
+            if (recognition) {
+                recognition.stop();
+            }
+            
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    // In a real app, you'd send this to a transcription service
+                    console.log('Audio recorded:', audioBlob);
+                };
+            }
+        }
+        
+        function generateNotes() {
+            const transcript = document.getElementById('transcript').value.trim();
+            if (!transcript) {
+                alert('Please enter or record some meeting content first.');
+                return;
+            }
+            
+            // Simple AI-like processing (in production, use actual AI API)
+            const sentences = transcript.split(/[.!?]+/).filter(s => s.trim().length > 10);
+            const summary = sentences.slice(0, 3).join('. ') + '.';
+            
+            // Extract action items (sentences with action words)
+            const actionWords = ['will', 'should', 'must', 'need to', 'going to', 'plan to'];
+            const actionItems = sentences
+                .filter(s => actionWords.some(word => s.toLowerCase().includes(word)))
+                .slice(0, 5)
+                .map(s => s.trim() + '.');
+            
+            // Extract key decisions (sentences with decision words)
+            const decisionWords = ['decided', 'agreed', 'chose', 'selected', 'approved'];
+            const decisions = sentences
+                .filter(s => decisionWords.some(word => s.toLowerCase().includes(word)))
+                .slice(0, 3)
+                .map(s => s.trim() + '.');
+            
+            document.getElementById('summary').innerHTML = `<p>${summary}</p>`;
+            document.getElementById('actionItems').innerHTML = actionItems.length > 0
+                ? '<ul>' + actionItems.map(item => `<li>${item}</li>`).join('') + '</ul>'
+                : '<p>No clear action items found.</p>';
+            document.getElementById('keyDecisions').innerHTML = decisions.length > 0
+                ? '<ul>' + decisions.map(dec => `<li>${dec}</li>`).join('') + '</ul>'
+                : '<p>No clear decisions found.</p>';
+            
+            document.getElementById('notesOutput').style.display = 'block';
+        }
+        
+        function saveNotes() {
+            const notes = {
+                id: Date.now(),
+                date: new Date().toISOString(),
+                transcript: document.getElementById('transcript').value,
+                summary: document.getElementById('summary').innerHTML,
+                actionItems: document.getElementById('actionItems').innerHTML,
+                keyDecisions: document.getElementById('keyDecisions').innerHTML
+            };
+            
+            let savedNotes = JSON.parse(localStorage.getItem('meetingNotes') || '[]');
+            savedNotes.unshift(notes);
+            localStorage.setItem('meetingNotes', JSON.stringify(savedNotes));
+            
+            renderSavedNotes();
+            alert('Notes saved!');
+        }
+        
+        function renderSavedNotes() {
+            const savedNotes = JSON.parse(localStorage.getItem('meetingNotes') || '[]');
+            const list = document.getElementById('savedNotesList');
+            
+            if (savedNotes.length === 0) {
+                list.innerHTML = '<p style="color: #999;">No saved notes yet.</p>';
+                return;
+            }
+            
+            list.innerHTML = savedNotes.map(note => `
+                <div class="note-item">
+                    <h4>Meeting - ${new Date(note.date).toLocaleString()}</h4>
+                    <p>${note.summary.replace(/<[^>]*>/g, '').substring(0, 150)}...</p>
+                    <button onclick="viewNote(${note.id})" style="margin-top: 0.5rem; padding: 0.5rem 1rem; font-size: 0.9rem;">View</button>
+                    <button onclick="deleteNote(${note.id})" style="background: #ff4444; margin-top: 0.5rem; padding: 0.5rem 1rem; font-size: 0.9rem;">Delete</button>
+                </div>
+            `).join('');
+        }
+        
+        function viewNote(id) {
+            const savedNotes = JSON.parse(localStorage.getItem('meetingNotes') || '[]');
+            const note = savedNotes.find(n => n.id === id);
+            if (note) {
+                document.getElementById('transcript').value = note.transcript;
+                document.getElementById('summary').innerHTML = note.summary;
+                document.getElementById('actionItems').innerHTML = note.actionItems;
+                document.getElementById('keyDecisions').innerHTML = note.keyDecisions;
+                document.getElementById('notesOutput').style.display = 'block';
+                window.scrollTo(0, 0);
+            }
+        }
+        
+        function deleteNote(id) {
+            if (confirm('Delete this note?')) {
+                let savedNotes = JSON.parse(localStorage.getItem('meetingNotes') || '[]');
+                savedNotes = savedNotes.filter(n => n.id !== id);
+                localStorage.setItem('meetingNotes', JSON.stringify(savedNotes));
+                renderSavedNotes();
+            }
+        }
+        
+        function clearAll() {
+            if (confirm('Clear all content?')) {
+                document.getElementById('transcript').value = '';
+                document.getElementById('notesOutput').style.display = 'none';
+            }
+        }
+        
+        renderSavedNotes();
+    </script>
+</body>
+</html>
+

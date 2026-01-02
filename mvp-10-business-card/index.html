@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Business Card Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #667eea;
+            text-decoration: none;
+            grid-column: 1 / -1;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 2rem;
+            grid-column: 1 / -1;
+        }
+        
+        .form-section, .preview-section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+        
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .social-links {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 1rem;
+            width: 100%;
+        }
+        
+        button:hover {
+            background: #5568d3;
+        }
+        
+        .preview-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 3rem;
+            color: white;
+            text-align: center;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .preview-card h2 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .preview-card .title {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+        
+        .preview-card .bio {
+            margin: 2rem 0;
+            line-height: 1.6;
+            opacity: 0.95;
+        }
+        
+        .preview-card .contact {
+            margin-top: 2rem;
+        }
+        
+        .preview-card .contact-item {
+            margin: 0.5rem 0;
+        }
+        
+        .social-icons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        .social-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            text-decoration: none;
+            color: white;
+        }
+        
+        .qr-section {
+            margin-top: 2rem;
+            text-align: center;
+        }
+        
+        .qr-code {
+            width: 200px;
+            height: 200px;
+            background: white;
+            border-radius: 8px;
+            margin: 1rem auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+        
+        .download-btn {
+            background: #00aa44;
+            margin-top: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← Back to Dashboard</a>
+        <h1>💼 Digital Business Card Generator</h1>
+        
+        <div class="form-section">
+            <h2>Your Information</h2>
+            <form id="cardForm">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="name" placeholder="John Doe" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Job Title</label>
+                    <input type="text" id="title" placeholder="Software Engineer">
+                </div>
+                
+                <div class="form-group">
+                    <label>Company</label>
+                    <input type="text" id="company" placeholder="Acme Inc.">
+                </div>
+                
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="email" placeholder="john@example.com">
+                </div>
+                
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="tel" id="phone" placeholder="+1 (555) 123-4567">
+                </div>
+                
+                <div class="form-group">
+                    <label>Website</label>
+                    <input type="url" id="website" placeholder="https://johndoe.com">
+                </div>
+                
+                <div class="form-group">
+                    <label>Bio / Description</label>
+                    <textarea id="bio" placeholder="A brief description about yourself..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Social Links</label>
+                    <div class="social-links">
+                        <input type="url" id="linkedin" placeholder="LinkedIn URL">
+                        <input type="url" id="twitter" placeholder="Twitter URL">
+                        <input type="url" id="github" placeholder="GitHub URL">
+                        <input type="url" id="instagram" placeholder="Instagram URL">
+                    </div>
+                </div>
+                
+                <button type="submit">Generate Card</button>
+            </form>
+        </div>
+        
+        <div class="preview-section">
+            <h2>Preview</h2>
+            <div class="preview-card" id="previewCard">
+                <h2 id="previewName">Your Name</h2>
+                <div class="title" id="previewTitle">Your Title</div>
+                <div class="bio" id="previewBio">Your bio will appear here...</div>
+                <div class="contact" id="previewContact"></div>
+                <div class="social-icons" id="previewSocial"></div>
+            </div>
+            
+            <div class="qr-section">
+                <h3>QR Code</h3>
+                <div class="qr-code" id="qrCode">📱</div>
+                <p style="color: #666; font-size: 0.9rem; margin-top: 1rem;">
+                    Scan to view your digital business card
+                </p>
+                <button class="download-btn" onclick="downloadCard()">Download QR Code</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Simple QR code generation using a library would be better, but for MVP we'll use a placeholder
+        // In production, use a library like qrcode.js or generate server-side
+        
+        document.getElementById('cardForm').addEventListener('input', updatePreview);
+        document.getElementById('cardForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            updatePreview();
+            generateQR();
+        });
+        
+        function updatePreview() {
+            const name = document.getElementById('name').value || 'Your Name';
+            const title = document.getElementById('title').value || 'Your Title';
+            const company = document.getElementById('company').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const website = document.getElementById('website').value;
+            const bio = document.getElementById('bio').value || 'Your bio will appear here...';
+            
+            document.getElementById('previewName').textContent = name;
+            document.getElementById('previewTitle').textContent = company 
+                ? `${title} at ${company}` 
+                : title;
+            document.getElementById('previewBio').textContent = bio;
+            
+            const contact = document.getElementById('previewContact');
+            contact.innerHTML = '';
+            if (email) {
+                contact.innerHTML += `<div class="contact-item">📧 ${email}</div>`;
+            }
+            if (phone) {
+                contact.innerHTML += `<div class="contact-item">📞 ${phone}</div>`;
+            }
+            if (website) {
+                contact.innerHTML += `<div class="contact-item">🌐 <a href="${website}" style="color: white;">${website}</a></div>`;
+            }
+            
+            const social = document.getElementById('previewSocial');
+            social.innerHTML = '';
+            const socialLinks = {
+                linkedin: { id: 'linkedin', icon: '💼', label: 'LinkedIn' },
+                twitter: { id: 'twitter', icon: '🐦', label: 'Twitter' },
+                github: { id: 'github', icon: '💻', label: 'GitHub' },
+                instagram: { id: 'instagram', icon: '📷', label: 'Instagram' }
+            };
+            
+            Object.values(socialLinks).forEach(link => {
+                const url = document.getElementById(link.id).value;
+                if (url) {
+                    social.innerHTML += `<a href="${url}" target="_blank" class="social-icon" title="${link.label}">${link.icon}</a>`;
+                }
+            });
+        }
+        
+        function generateQR() {
+            // In production, use a QR code library
+            // For MVP, we'll create a data URL that represents the card
+            const cardData = {
+                name: document.getElementById('name').value,
+                title: document.getElementById('title').value,
+                company: document.getElementById('company').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                website: document.getElementById('website').value,
+                bio: document.getElementById('bio').value,
+                social: {
+                    linkedin: document.getElementById('linkedin').value,
+                    twitter: document.getElementById('twitter').value,
+                    github: document.getElementById('github').value,
+                    instagram: document.getElementById('instagram').value
+                }
+            };
+            
+            // Create a shareable URL (in production, host this on a server)
+            const dataStr = encodeURIComponent(JSON.stringify(cardData));
+            const shareUrl = `${window.location.origin}${window.location.pathname}?card=${dataStr}`;
+            
+            // For MVP, show a simple QR representation
+            // In production, use: https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(shareUrl)}
+            document.getElementById('qrCode').innerHTML = `
+                <div style="font-size: 1rem; color: #333; padding: 1rem;">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">📱</div>
+                    <div style="font-size: 0.8rem; word-break: break-all;">${shareUrl.substring(0, 30)}...</div>
+                </div>
+            `;
+            
+            // Store card data
+            localStorage.setItem('businessCard', JSON.stringify(cardData));
+        }
+        
+        function downloadCard() {
+            // In production, generate actual QR code image
+            alert('QR code download feature - In production, this would download a PNG image of the QR code');
+        }
+        
+        // Load saved card data
+        window.addEventListener('load', function() {
+            const saved = localStorage.getItem('businessCard');
+            if (saved) {
+                const data = JSON.parse(saved);
+                document.getElementById('name').value = data.name || '';
+                document.getElementById('title').value = data.title || '';
+                document.getElementById('company').value = data.company || '';
+                document.getElementById('email').value = data.email || '';
+                document.getElementById('phone').value = data.phone || '';
+                document.getElementById('website').value = data.website || '';
+                document.getElementById('bio').value = data.bio || '';
+                if (data.social) {
+                    document.getElementById('linkedin').value = data.social.linkedin || '';
+                    document.getElementById('twitter').value = data.social.twitter || '';
+                    document.getElementById('github').value = data.social.github || '';
+                    document.getElementById('instagram').value = data.social.instagram || '';
+                }
+                updatePreview();
+            }
+            
+            // Check for card data in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const cardData = urlParams.get('card');
+            if (cardData) {
+                try {
+                    const data = JSON.parse(decodeURIComponent(cardData));
+                    // Display card in view mode
+                    document.getElementById('previewName').textContent = data.name;
+                    document.getElementById('previewTitle').textContent = data.company 
+                        ? `${data.title} at ${data.company}` 
+                        : data.title;
+                    document.getElementById('previewBio').textContent = data.bio;
+                } catch (e) {
+                    console.error('Error parsing card data:', e);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+
