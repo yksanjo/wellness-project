@@ -165,7 +165,94 @@
                 </div>
             </a>
         </div>
+
+        <!-- Premium Section -->
+        <div class="premium-section" style="margin-top: 4rem; padding: 3rem; background: rgba(255, 255, 255, 0.1); border-radius: 16px; backdrop-filter: blur(10px);">
+            <div style="text-align: center; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: white; font-size: 2rem; margin-bottom: 1rem;">Get All 10 Wellness MVPs</h2>
+                <p style="color: rgba(255, 255, 255, 0.9); margin-bottom: 2rem; font-size: 1.1rem;">
+                    Unlock complete access to all wellness products with source code, lifetime updates, and commercial license.
+                </p>
+                
+                <div style="background: white; border-radius: 12px; padding: 2rem; margin-bottom: 2rem;">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 1.5rem;">
+                        <div style="font-size: 3rem; font-weight: bold; color: #667eea;">$29.99</div>
+                        <div style="color: #666;">one-time payment</div>
+                    </div>
+                    
+                    <ul style="list-style: none; text-align: left; max-width: 400px; margin: 0 auto 2rem;">
+                        <li style="padding: 0.5rem 0; color: #666;">✓ All 10 wellness product MVPs</li>
+                        <li style="padding: 0.5rem 0; color: #666;">✓ Complete source code</li>
+                        <li style="padding: 0.5rem 0; color: #666;">✓ Lifetime updates</li>
+                        <li style="padding: 0.5rem 0; color: #666;">✓ Commercial license</li>
+                        <li style="padding: 0.5rem 0; color: #666;">✓ Priority support</li>
+                    </ul>
+                    
+                    <button id="checkout-button" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 1rem 2rem; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; width: 100%; transition: transform 0.3s;">
+                        Get Premium Access
+                    </button>
+                    
+                    <p style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.7); margin-top: 1rem;">
+                        Secure payment powered by Stripe
+                    </p>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+        const stripe = Stripe('pk_test_51SocA3FeFShI4ymdBmcR1Tn8zQnphab6AVBu1eG428PVjOmqqMDFBLgI7Gvr9Aj9p4h6IDg6JqtZhr2slE7hu7NR00s0aHlXiA');
+        
+        document.getElementById('checkout-button').addEventListener('click', async () => {
+            const button = document.getElementById('checkout-button');
+            button.innerHTML = 'Processing...';
+            button.disabled = true;
+            
+            try {
+                const response = await fetch('/api/create-checkout-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        productId: 'wellness-premium'
+                    })
+                });
+                
+                const session = await response.json();
+                
+                if (session.error) {
+                    alert('Error: ' + session.error);
+                    button.innerHTML = 'Get Premium Access';
+                    button.disabled = false;
+                    return;
+                }
+                
+                const result = await stripe.redirectToCheckout({
+                    sessionId: session.sessionId
+                });
+                
+                if (result.error) {
+                    alert(result.error.message);
+                    button.innerHTML = 'Get Premium Access';
+                    button.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+                button.innerHTML = 'Get Premium Access';
+                button.disabled = false;
+            }
+        });
+    </script>
 </body>
 </html>
+
+
+
+
+
+
+
 
